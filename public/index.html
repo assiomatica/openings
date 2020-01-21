@@ -1,0 +1,154 @@
+<script src="https://unpkg.com/vue"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.1/axios.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css?family=Quicksand&display=swap');
+
+  * {
+    font-family: 'Arial';
+    font-weight: bold;
+  }
+
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .column {
+    box-sizing: border-box;
+    flex: 1;
+    word-wrap: break-word;
+  }
+
+  .bigger {
+    flex: 2.5;
+  }
+
+  .halves .column {
+    _flex: 0 0 50%;
+  }
+
+  .thirds .column {
+    flex: 0 0 33.3333%;
+  }
+
+  .fourths .column {
+    flex: 0 0 25%;
+  }
+/*
+  @media (max-width: 900px) {
+    .grid {
+      display: block;
+    }
+
+    .halfbordered {
+      border-top: none!important;
+      border-left: 5px solid #aaa;
+      border-right: 5px solid #aaa;
+      border-bottom: 5px solid #aaa;
+      padding: 20px;
+    }
+  }
+*/
+  .bordered {
+    border: 5px solid #aaa;
+    padding: 20px;
+  }
+
+  .halfbordered {
+    border-top: 5px solid #aaa;
+    border-right: 5px solid #aaa;
+    border-bottom: 5px solid #aaa;
+    padding: 20px;
+  }
+
+  .alignright {
+    text-align: right;
+  }
+</style>
+<div id="app" class="grid">
+  <div class="column bordered">
+    <h2>{{ info.name }}</h2>
+    <p>{{ info.address }}</p>
+  </div>
+  <div class="column halfbordered" v-if="results">
+    <div class="grid halves" v-for="(day, key) in results">
+      <div class="column halves">{{ day.join() }}</div>
+      <div class="column halves alignright"> <span v-html="getTimes(key)"></span></div>
+    </div>
+  </div>
+</div>
+<script>
+
+  String.prototype.hashCode = function () {
+    var hash = 0, i, chr;
+    if (this.length === 0) return hash;
+    for (i = 0; i < this.length; i++) {
+      chr = this.charCodeAt(i);
+      hash = ((hash << 5) - hash) + chr;
+      hash |= 0; // Convert to 32bit integer
+    }
+    return hash;
+  };
+
+  new Vue({
+    el: '#app',
+    data() {
+      return {
+        apiUrl: 'http://localhost:3000/business/',
+        info: {},
+        results: {},
+        weekdays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+      }
+    },
+    mounted() {
+
+      // GXvPAor1ifNfpF0U5PTG0w and ohGSnJtMIC5nPfYRi_HTAg
+      const id = 'ohGSnJtMIC5nPfYRi_HTAg';
+
+      axios
+        .get(`${this.apiUrl}${id}`)
+        .then(response => {
+          console.log(response);
+          var times = {}
+          // add closed days
+
+          this.weekdays.forEach(elem => {
+            console.log(elem)
+            if (response.data.opening_hours.days[elem] == null) {
+              response.data.opening_hours.days[elem] = []
+            }
+            times[elem] = response.data.opening_hours.days[elem];
+          });
+
+          for (day in times) {
+            // console.log(response.data.opening_hours.days[day])
+
+            var key = JSON.stringify(times[day])
+            if (!this.results[key]) {
+              this.results[key] = [];
+            }
+            this.results[key].push(day)
+
+          }
+          console.log(this.results);
+          this.info = response.data
+
+        })
+        .catch(error => console.log(error))
+    },
+    methods: {
+      getTimes: function (data) {
+        var row = ''
+        const obj = JSON.parse(data)
+        if (obj.length == 0) {
+          row = 'closed'
+        } else {
+          for (key in obj) {
+            row += `${obj[key].start} -  ${obj[key].end}<br/>`
+          }
+        }
+        return row
+      }
+    }
+  })
+</script>
