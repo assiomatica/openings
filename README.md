@@ -6,3 +6,5 @@
 
 Backend and Frontend are separated but for easier development 
 the backend api server serve the static files of the frontend from the folder'public'
+
+To run install node.js environment and execute 'node index' from root folder
